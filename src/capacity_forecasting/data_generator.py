@@ -184,14 +184,50 @@ class CapacityDataGenerator(TelecomDataGenerator):
             diurnal = self._diurnal_factor(hour)
             weekly = self._weekly_factor(day_of_week)
             trend = self._growth_trend(day_index)
-            noise = self.rng.normal(1.0, 0.10, n_timesteps)
 
-            traffic_load = base_load * diurnal * weekly * trend * noise
+            # Base noise: moderate variance for realistic forecasting error
+            noise = self.rng.normal(1.0, 0.12, n_timesteps)
 
-            # Special events
-            is_event = self.rng.random(n_timesteps) < self.special_event_probability
-            event_multiplier = self.rng.uniform(2.0, self.special_event_multiplier, n_timesteps)
+            # Auto-correlated noise (AR(1) process): consecutive hours
+            # share noise, so lag-1 features can't fully eliminate it.
+            ar_noise = np.zeros(n_timesteps)
+            ar_noise[0] = self.rng.normal(0, 0.04)
+            for t in range(1, n_timesteps):
+                ar_noise[t] = 0.6 * ar_noise[t - 1] + self.rng.normal(0, 0.04)
+
+            # Cell-specific random walk drift (non-linear growth)
+            # Some cells gain/lose subscribers unpredictably.
+            drift = np.zeros(n_timesteps)
+            drift[0] = 0
+            for t in range(1, n_timesteps):
+                drift[t] = drift[t - 1] + self.rng.normal(0, 0.002)
+            drift_factor = 1.0 + np.clip(drift, -0.10, 0.10)
+
+            traffic_load = base_load * diurnal * weekly * trend * noise * drift_factor
+            traffic_load = traffic_load + ar_noise * base_load
+
+            # Special events: multi-hour blocks (3-6 hours) with moderate
+            # traffic spikes, harder to predict but not overwhelming.
+            is_event = np.zeros(n_timesteps, dtype=bool)
+            t = 0
+            while t < n_timesteps:
+                if self.rng.random() < self.special_event_probability * 0.5:
+                    duration = int(self.rng.integers(3, 7))
+                    is_event[t : min(t + duration, n_timesteps)] = True
+                    t += duration
+                else:
+                    t += 1
+            event_multiplier = self.rng.uniform(
+                1.3, self.special_event_multiplier * 0.8, n_timesteps
+            )
             traffic_load = np.where(is_event, traffic_load * event_multiplier, traffic_load)
+
+            # Occasional cell outages (~0.1% of hours): traffic drops sharply
+            outage_mask = self.rng.random(n_timesteps) < 0.001
+            traffic_load = np.where(
+                outage_mask, traffic_load * self.rng.uniform(0.05, 0.2), traffic_load
+            )
+
             traffic_load = np.clip(traffic_load, 0.0, None)
 
             # ----- correlated KPIs -----

@@ -44,10 +44,10 @@ Domain physics: traffic follows predictable diurnal and weekly cycles driven by 
 
 ## Key Findings
 
-- **MAPE:** 1.6%, **R²:** 0.9991 on held-out test set (chronological split)
-- **Most important feature:** 24h lag -- yesterday's same-hour traffic is the strongest predictor
-- Peak-hour MAPE (1.68%) and off-peak MAPE (1.60%) are well-balanced, indicating consistent accuracy
-- High-traffic detection: 99.3% precision, 96.5% recall for capacity threshold alerting
+- **MAPE:** 14.5%, **R²:** 0.90 on held-out test set (chronological split, no contemporaneous features)
+- **Top predictors:** lag features (1h, 24h, 168h) and lagged rolling aggregates dominate SHAP importance
+- Peak-hour MAPE (15.0%) and off-peak MAPE (14.3%) are well-balanced, indicating consistent accuracy across traffic regimes
+- Model uses only historically available features (lags, rolling stats, calendar) -- no contemporaneous KPIs that would constitute data leakage in a real forecasting scenario
 
 ## Quick Start
 

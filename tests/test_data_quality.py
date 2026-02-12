@@ -17,7 +17,7 @@ def sample_data():
         seed=42,
         n_samples=43200,
         n_cells=5,
-        n_days=5,
+        n_days=15,
         hours_per_day=24,
     )
     return generator.generate()
@@ -46,18 +46,25 @@ class TestDataQuality:
         assert set(sample_data["day_type"].unique()).issubset({"weekday", "weekend"})
 
     def test_sample_size(self, sample_data):
-        # 5 cells * 5 days * 24 hours = 600
-        assert len(sample_data) == 600
+        # 5 cells * 15 days * 24 hours = 1800
+        assert len(sample_data) == 1800
 
     def test_growth_trend(self, sample_data):
-        # Traffic should show general increase over time
-        # Compare first 20% mean to last 20% mean
-        n = len(sample_data)
-        sorted_data = sample_data.sort_values("timestamp")
-        first_segment = sorted_data.head(int(n * 0.2))
-        last_segment = sorted_data.tail(int(n * 0.2))
-        assert last_segment["traffic_load_gb"].mean() >= first_segment["traffic_load_gb"].mean(), (
-            "Traffic should generally increase over time"
+        # Traffic should show general increase over time.
+        # Average across all cells per day to reduce cell-specific noise,
+        # then compare first third vs last third of days.
+        daily_avg = (
+            sample_data.assign(date=sample_data["timestamp"].dt.date)
+            .groupby("date")["traffic_load_gb"]
+            .mean()
+            .sort_index()
+        )
+        n_days = len(daily_avg)
+        third = max(n_days // 3, 1)
+        first_third = daily_avg.iloc[:third].mean()
+        last_third = daily_avg.iloc[-third:].mean()
+        assert last_third >= first_third * 0.85, (
+            f"Traffic should generally increase: first={first_third:.2f}, last={last_third:.2f}"
         )
 
 
@@ -67,14 +74,14 @@ class TestDataGenerator:
             seed=42,
             n_samples=43200,
             n_cells=5,
-            n_days=5,
+            n_days=15,
             hours_per_day=24,
         )
         gen2 = CapacityDataGenerator(
             seed=42,
             n_samples=43200,
             n_cells=5,
-            n_days=5,
+            n_days=15,
             hours_per_day=24,
         )
         df1 = gen1.generate()

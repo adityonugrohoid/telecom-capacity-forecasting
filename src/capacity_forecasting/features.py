@@ -158,6 +158,40 @@ class FeatureEngineer:
 
         return df
 
+    def create_lagged_rolling_aggregates(
+        self,
+        df: pd.DataFrame,
+        group_col: str = "cell_id",
+        target_col: str = "traffic_load_gb",
+        windows: List[int] = [24, 168],
+    ) -> pd.DataFrame:
+        """
+        Create rolling aggregates using only *past* data (shifted by 1).
+
+        Unlike ``create_rolling_aggregates``, this method first shifts the
+        target column so the rolling window never includes the current
+        timestep.  This prevents data leakage in a forecasting context.
+        """
+        df = df.copy()
+        df = df.sort_values([group_col, "timestamp"])
+
+        shifted = df.groupby(group_col)[target_col].shift(1)
+        for window in windows:
+            df[f"{target_col}_rm{window}_mean"] = (
+                shifted.groupby(df[group_col])
+                .rolling(window, min_periods=1)
+                .mean()
+                .reset_index(0, drop=True)
+            )
+            df[f"{target_col}_rm{window}_std"] = (
+                shifted.groupby(df[group_col])
+                .rolling(window, min_periods=1)
+                .std()
+                .reset_index(0, drop=True)
+            )
+
+        return df
+
     def encode_categorical(
         self, df: pd.DataFrame, categorical_cols: List[str] = None, method: str = "onehot"
     ) -> Tuple[pd.DataFrame, dict]:
@@ -249,6 +283,10 @@ class FeatureEngineer:
         # Lag features for time-series forecasting (after temporal, before interactions)
         print("  - Creating lag features")
         df = self.create_lag_features(df)
+
+        # Rolling aggregates of *past* traffic (shifted to avoid leakage)
+        print("  - Creating rolling aggregates (lagged)")
+        df = self.create_lagged_rolling_aggregates(df)
 
         if create_interactions:
             print("  - Creating interaction features")
