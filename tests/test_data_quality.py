@@ -24,7 +24,6 @@ def sample_data():
 
 
 class TestDataQuality:
-
     def test_no_missing_values(self, sample_data):
         critical_cols = ["cell_id", "timestamp", "traffic_load_gb", "connected_users"]
         for col in critical_cols:
@@ -63,7 +62,6 @@ class TestDataQuality:
 
 
 class TestDataGenerator:
-
     def test_generator_reproducibility(self):
         gen1 = CapacityDataGenerator(
             seed=42,

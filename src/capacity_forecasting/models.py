@@ -56,12 +56,8 @@ class BaseModel:
             metrics["precision"] = precision_score(
                 y_test, y_pred, average="weighted", zero_division=0
             )
-            metrics["recall"] = recall_score(
-                y_test, y_pred, average="weighted", zero_division=0
-            )
-            metrics["f1"] = f1_score(
-                y_test, y_pred, average="weighted", zero_division=0
-            )
+            metrics["recall"] = recall_score(y_test, y_pred, average="weighted", zero_division=0)
+            metrics["f1"] = f1_score(y_test, y_pred, average="weighted", zero_division=0)
             if len(np.unique(y_test)) == 2:
                 y_proba = self.model.predict_proba(X_test)[:, 1]
                 metrics["roc_auc"] = roc_auc_score(y_test, y_proba)
@@ -70,8 +66,7 @@ class BaseModel:
             metrics["rmse"] = np.sqrt(metrics["mse"])
             metrics["mae"] = mean_absolute_error(y_test, y_pred)
             metrics["r2"] = 1 - (
-                np.sum((y_test - y_pred) ** 2)
-                / np.sum((y_test - y_test.mean()) ** 2)
+                np.sum((y_test - y_pred) ** 2) / np.sum((y_test - y_test.mean()) ** 2)
             )
         return metrics
 
@@ -111,12 +106,12 @@ def cross_validate_model(model, X, y, cv_folds=5, scoring="accuracy"):
 
 def print_metrics(metrics, title="Model Performance"):
     """Pretty-print evaluation metrics."""
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"{title:^50}")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
     for metric, value in metrics.items():
         print(f"{metric:20s}: {value:8.4f}")
-    print(f"{'='*50}\n")
+    print(f"{'=' * 50}\n")
 
 
 class LightGBMForecaster(BaseModel):
@@ -143,8 +138,8 @@ class LightGBMForecaster(BaseModel):
         X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
         y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
 
-        print(f"Train set: {X_train.shape[0]:,} samples (earliest {100*(1-test_ratio):.0f}%)")
-        print(f"Test set:  {X_test.shape[0]:,} samples (latest {100*test_ratio:.0f}%)")
+        print(f"Train set: {X_train.shape[0]:,} samples (earliest {100 * (1 - test_ratio):.0f}%)")
+        print(f"Test set:  {X_test.shape[0]:,} samples (latest {100 * test_ratio:.0f}%)")
         return X_train, X_test, y_train, y_test
 
     def train(self, X_train, y_train):
@@ -261,9 +256,7 @@ class ProphetForecaster(BaseModel):
         trend_pred = self._trend_model.predict(future_idx)
 
         # Tile seasonal component
-        full_seasonal = np.tile(
-            self._seasonal_cycle, (n_steps // self._period) + 1
-        )[:n_steps]
+        full_seasonal = np.tile(self._seasonal_cycle, (n_steps // self._period) + 1)[:n_steps]
 
         return trend_pred + full_seasonal
 
