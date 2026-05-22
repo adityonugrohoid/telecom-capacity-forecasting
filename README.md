@@ -2,8 +2,9 @@
 
 # Telecom Capacity Forecasting
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![uv](https://img.shields.io/badge/uv-package%20manager-blueviolet)](https://github.com/astral-sh/uv)
+[![LightGBM](https://img.shields.io/badge/LightGBM-4.1%2B-brightgreen.svg)](https://lightgbm.readthedocs.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Forecast hourly cell-level network traffic load using LightGBM and statsmodels-based seasonal decomposition**
