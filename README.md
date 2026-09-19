@@ -166,6 +166,9 @@ uv run jupyter nbconvert --to notebook --execute notebooks/*.ipynb
 | R2 | 0.90 | Chronological split, no contemporaneous features |
 | Peak-hour MAPE | 15.0% | 09:00-11:00 and 18:00-21:00 windows |
 | Off-peak MAPE | 14.3% | Consistent accuracy across traffic regimes |
+| Baseline MAPE | 76.1% | ProphetForecaster (statsmodels seasonal decomposition), same split, from `evidence/baseline_metrics.json` |
+
+Reproduce with `uv run python -m capacity_forecasting.baseline`.
 
 ### Top Predictors
 
